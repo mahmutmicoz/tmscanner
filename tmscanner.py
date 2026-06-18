@@ -16,7 +16,8 @@ __version__ = "2.0.0"
 __author__ = "Mahmut MİCOZKADIOĞLU"
 __app_name__ = "TMScanner"
 
-DEVICE = "airscan:e0:Brother MFC-L2715DW series (USB)"
+DEVICE_ADF     = "airscan:e0:Brother MFC-L2715DW series (USB)"
+DEVICE_FLATBED = "escl:http://localhost:60000"
 KAYIT_KLASORU = os.path.expanduser("~/Documents/TMScanner")
 
 # Ghostscript PDF sıkıştırma kalitesi:
@@ -486,8 +487,8 @@ class TMScanner:
             if kaynak == "ADF":
                 cmd = [
                     "scanimage",
-                    f"--device={DEVICE}",
-                    f"--source=ADF",
+                    f"--device={DEVICE_ADF}",
+                    "--source=ADF",
                     f"--mode={renk_deger}",
                     f"--resolution={coz}",
                     "--format=png",
@@ -495,11 +496,10 @@ class TMScanner:
                     f"--batch-count={self.sayfa_sayisi.get()}",
                 ]
             else:
-                # Düz yüzey: tek sayfa, batch kullanma
                 cmd = [
                     "scanimage",
-                    f"--device={DEVICE}",
-                    f"--source=Flatbed",
+                    f"--device={DEVICE_FLATBED}",
+                    "--source=Flatbed",
                     f"--mode={renk_deger}",
                     f"--resolution={coz}",
                     "--format=png",
