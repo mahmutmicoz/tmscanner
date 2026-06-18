@@ -483,17 +483,28 @@ class TMScanner:
             gecici = os.path.join(klasor, f"_gecici_{zaman}")
             os.makedirs(gecici, exist_ok=True)
 
-            cmd = [
-                "scanimage",
-                f"--device={DEVICE}",
-                f"--source={kaynak}",
-                f"--mode={renk_deger}",
-                f"--resolution={coz}",
-                "--format=png",
-                f"--batch={gecici}/page%03d.png",
-            ]
             if kaynak == "ADF":
-                cmd.append(f"--batch-count={self.sayfa_sayisi.get()}")
+                cmd = [
+                    "scanimage",
+                    f"--device={DEVICE}",
+                    f"--source=ADF",
+                    f"--mode={renk_deger}",
+                    f"--resolution={coz}",
+                    "--format=png",
+                    f"--batch={gecici}/page%03d.png",
+                    f"--batch-count={self.sayfa_sayisi.get()}",
+                ]
+            else:
+                # Düz yüzey: tek sayfa, batch kullanma
+                cmd = [
+                    "scanimage",
+                    f"--device={DEVICE}",
+                    f"--source=Flatbed",
+                    f"--mode={renk_deger}",
+                    f"--resolution={coz}",
+                    "--format=png",
+                    f"--output-file={gecici}/page001.png",
+                ]
 
             subprocess.run(cmd, capture_output=True)
 
