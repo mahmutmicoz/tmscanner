@@ -95,25 +95,52 @@ class TarayiciApp:
         stil.configure("TSeparator", background="#444466")
 
     def _arayuz_olustur(self):
+        # Pencere simgesi
+        try:
+            icon_yolu = os.path.join(os.path.dirname(os.path.abspath(__file__)), "icon.png")
+            if not os.path.exists(icon_yolu):
+                icon_yolu = "/usr/share/brother-tarayici/icon.png"
+            if os.path.exists(icon_yolu):
+                img = tk.PhotoImage(file=icon_yolu)
+                self.root.iconphoto(True, img)
+        except Exception:
+            pass
+
         # Ana çerçeve
         ana = tk.Frame(self.root, bg=KOYU)
-        ana.pack(fill=tk.BOTH, expand=True, padx=0, pady=0)
+        ana.pack(fill=tk.BOTH, expand=True)
 
-        # Sol panel
+        # Sol panel (sabit genişlik)
         sol = tk.Frame(ana, bg=PANEL, width=310)
-        sol.pack(side=tk.LEFT, fill=tk.Y, padx=0, pady=0)
+        sol.pack(side=tk.LEFT, fill=tk.Y)
         sol.pack_propagate(False)
 
         # Başlık alanı
-        baslik_frame = tk.Frame(sol, bg=VURGU, pady=18)
+        baslik_frame = tk.Frame(sol, bg=VURGU, pady=14)
         baslik_frame.pack(fill=tk.X)
         tk.Label(baslik_frame, text="Brother MFC-L2716DW",
                  bg=VURGU, fg="#ffffff", font=("Segoe UI", 13, "bold")).pack()
         tk.Label(baslik_frame, text="Tarayıcı Uygulaması",
                  bg=VURGU, fg="#d0c8ff", font=("Segoe UI", 9)).pack()
 
-        ic = tk.Frame(sol, bg=PANEL, padx=20)
-        ic.pack(fill=tk.BOTH, expand=True, pady=10)
+        # Kaydırılabilir ayarlar alanı
+        ayar_canvas = tk.Canvas(sol, bg=PANEL, highlightthickness=0)
+        ayar_canvas.pack(side=tk.TOP, fill=tk.BOTH, expand=True)
+        scrollbar = tk.Scrollbar(sol, orient=tk.VERTICAL, command=ayar_canvas.yview)
+        # Scrollbar sadece gerekince görünsün — mousewheel ile kaydır
+        ayar_canvas.configure(yscrollcommand=scrollbar.set)
+
+        ic = tk.Frame(ayar_canvas, bg=PANEL, padx=20)
+        ic_win = ayar_canvas.create_window((0, 0), window=ic, anchor=tk.NW)
+
+        def _ic_boyut(e):
+            ayar_canvas.configure(scrollregion=ayar_canvas.bbox("all"))
+            ayar_canvas.itemconfig(ic_win, width=ayar_canvas.winfo_width())
+        ic.bind("<Configure>", _ic_boyut)
+        ayar_canvas.bind("<Configure>", lambda e: ayar_canvas.itemconfig(ic_win, width=e.width))
+        ayar_canvas.bind_all("<MouseWheel>", lambda e: ayar_canvas.yview_scroll(-1*(e.delta//120), "units"))
+        ayar_canvas.bind_all("<Button-4>", lambda e: ayar_canvas.yview_scroll(-1, "units"))
+        ayar_canvas.bind_all("<Button-5>", lambda e: ayar_canvas.yview_scroll(1, "units"))
 
         def bolum_baslik(parent, metin):
             tk.Label(parent, text=metin, bg=PANEL, fg=METIN2,
@@ -127,7 +154,7 @@ class TarayiciApp:
                                     bg=PANEL, fg=METIN, selectcolor=VURGU,
                                     activebackground=PANEL, activeforeground=METIN,
                                     font=("Segoe UI", 10), cursor="hand2")
-                rb.pack(side=tk.LEFT, padx=(0, 10))
+                rb.pack(side=tk.LEFT, padx=(0, 8))
 
         bolum_baslik(ic, "KAYNAK")
         radio_satir(ic, [("ADF (Otomatik)", "ADF"), ("Düz Yüzey", "Flatbed")], self.kaynak)
@@ -159,35 +186,35 @@ class TarayiciApp:
                   bg=GIRIS, fg=METIN, relief="flat", cursor="hand2",
                   font=("Segoe UI", 9), padx=6).pack(side=tk.LEFT, padx=(4, 0), ipady=4)
 
-        # Durum
-        tk.Frame(ic, bg="#444466", height=1).pack(fill=tk.X, pady=14)
+        # ── Alt sabit alan: durum + TARA butonu ──
+        alt_panel = tk.Frame(sol, bg=PANEL)
+        alt_panel.pack(side=tk.BOTTOM, fill=tk.X)
 
-        self.durum_label = tk.Label(ic, textvariable=self.durum, bg=PANEL,
+        tk.Frame(alt_panel, bg="#444466", height=1).pack(fill=tk.X)
+
+        self.durum_label = tk.Label(alt_panel, textvariable=self.durum, bg=PANEL,
                                     fg=METIN2, font=("Segoe UI", 9), wraplength=260)
-        self.durum_label.pack()
+        self.durum_label.pack(pady=(8, 2))
 
-        self.ilerleme = ttk.Progressbar(ic, mode="indeterminate", length=260,
+        self.ilerleme = ttk.Progressbar(alt_panel, mode="indeterminate", length=260,
                                         style="TProgressbar")
-        self.ilerleme.pack(pady=8)
+        self.ilerleme.pack(pady=4, padx=20)
 
-        self.tara_btn = tk.Button(ic, text="  TARA  ", command=self._tara_baslat,
+        self.tara_btn = tk.Button(alt_panel, text="  TARA  ", command=self._tara_baslat,
                                   bg=VURGU, fg="#ffffff", relief="flat",
-                                  font=("Segoe UI", 12, "bold"), cursor="hand2",
-                                  padx=30, pady=10,
+                                  font=("Segoe UI", 13, "bold"), cursor="hand2",
+                                  padx=30, pady=12,
                                   activebackground="#6a5ae0", activeforeground="#ffffff")
-        self.tara_btn.pack(pady=6)
+        self.tara_btn.pack(pady=6, fill=tk.X, padx=20)
 
-        self.son_dosya_btn = tk.Button(ic, text="Dosyayı Aç", command=self._son_dosyayi_ac,
+        self.son_dosya_btn = tk.Button(alt_panel, text="Dosyayı Aç", command=self._son_dosyayi_ac,
                                        bg=GIRIS, fg=METIN2, relief="flat",
                                        font=("Segoe UI", 9), cursor="hand2",
-                                       padx=10, pady=5, state=tk.DISABLED)
-        self.son_dosya_btn.pack()
+                                       padx=10, pady=4, state=tk.DISABLED)
+        self.son_dosya_btn.pack(pady=(0, 4))
 
-        # Alt imza
-        alt = tk.Frame(sol, bg=PANEL, pady=8)
-        alt.pack(fill=tk.X, side=tk.BOTTOM)
-        tk.Label(alt, text=f"v{__version__}  ·  {__author__}",
-                 bg=PANEL, fg=METIN2, font=("Segoe UI", 7)).pack()
+        tk.Label(alt_panel, text=f"v{__version__}  ·  {__author__}",
+                 bg=PANEL, fg=METIN2, font=("Segoe UI", 7)).pack(pady=(0, 6))
 
         # Sağ panel: önizleme
         sag = tk.Frame(ana, bg=KOYU)
