@@ -39,6 +39,7 @@ class TarayiciApp:
         self.root.configure(bg=KOYU)
 
         self.kaynak = tk.StringVar(value="ADF")
+        self.renk = tk.StringVar(value="Renkli")
         self.cozunurluk = tk.StringVar(value="300")
         self.format = tk.StringVar(value="pdf")
         self.sayfa_sayisi = tk.StringVar(value="10")
@@ -133,6 +134,9 @@ class TarayiciApp:
 
         bolum_baslik(ic, "ÇÖZÜNÜRLÜK")
         radio_satir(ic, [("150 DPI", "150"), ("300 DPI", "300"), ("600 DPI", "600")], self.cozunurluk)
+
+        bolum_baslik(ic, "RENK MODU")
+        radio_satir(ic, [("Renkli", "Renkli"), ("Gri", "Gri"), ("Siyah-Beyaz", "Siyah-Beyaz")], self.renk)
 
         bolum_baslik(ic, "FORMAT")
         radio_satir(ic, [("PDF", "pdf"), ("PNG", "png"), ("JPEG", "jpeg")], self.format)
@@ -239,6 +243,10 @@ class TarayiciApp:
             fmt = self.format.get()
             kaynak = self.kaynak.get()
             coz = self.cozunurluk.get()
+            renk_mod = self.renk.get()
+
+            renk_map = {"Renkli": "Color", "Gri": "Gray", "Siyah-Beyaz": "Black & White"}
+            renk_deger = renk_map.get(renk_mod, "Color")
 
             gecici = os.path.join(klasor, f"_gecici_{zaman}")
             os.makedirs(gecici, exist_ok=True)
@@ -247,6 +255,7 @@ class TarayiciApp:
                 "scanimage",
                 f"--device={DEVICE}",
                 f"--source={kaynak}",
+                f"--mode={renk_deger}",
                 f"--resolution={coz}",
                 "--format=png",
                 f"--batch={gecici}/sayfa%03d.png",
@@ -263,6 +272,7 @@ class TarayiciApp:
             if fmt == "pdf":
                 cikti = os.path.join(klasor, f"tarama_{zaman}.pdf")
                 subprocess.run(["convert"] + sayfalar + [cikti], check=True)
+                onizleme_sayfalar = sayfalar[:]  # PNG'ler henüz silinmedi, önizleme için sakla
             elif fmt == "png":
                 if len(sayfalar) == 1:
                     cikti = os.path.join(klasor, f"tarama_{zaman}.png")
@@ -276,6 +286,7 @@ class TarayiciApp:
                         new.append(dst)
                     sayfalar = new
                     cikti = sayfalar[0]
+                onizleme_sayfalar = sayfalar[:]
             elif fmt == "jpeg":
                 new = []
                 for i, s in enumerate(sayfalar):
@@ -285,27 +296,35 @@ class TarayiciApp:
                     new.append(dst)
                 sayfalar = new
                 cikti = sayfalar[0]
-
-            for f in glob.glob(f"{gecici}/*"):
-                os.remove(f)
-            try:
-                os.rmdir(gecici)
-            except Exception:
-                pass
+                onizleme_sayfalar = sayfalar[:]
 
             self.son_dosyayi = cikti
-            self.root.after(0, self._tara_bitti, sayfalar, f"Kaydedildi: {os.path.basename(cikti)}")
+
+            # Geçici klasör temizliği (PDF için PNG'ler önizleme yüklendikten sonra silinecek)
+            temizle = gecici if fmt == "pdf" else None
+            self.root.after(0, self._tara_bitti, onizleme_sayfalar,
+                            f"Kaydedildi: {os.path.basename(cikti)}", temizle)
 
         except Exception as e:
             self.root.after(0, self._tara_hata, str(e))
 
-    def _tara_bitti(self, sayfalar, mesaj):
+    def _tara_bitti(self, sayfalar, mesaj, temizle=None):
         self.ilerleme.stop()
         self.durum.set(mesaj)
         self.durum_label.config(fg=YESIL)
         self.tara_btn.config(state=tk.NORMAL)
         self.son_dosya_btn.config(state=tk.NORMAL)
         self._onizleme_yukle(sayfalar)
+        if temizle:
+            for f in glob.glob(f"{temizle}/*"):
+                try:
+                    os.remove(f)
+                except Exception:
+                    pass
+            try:
+                os.rmdir(temizle)
+            except Exception:
+                pass
 
     def _tara_hata(self, mesaj):
         self.ilerleme.stop()
@@ -316,33 +335,10 @@ class TarayiciApp:
 
     def _onizleme_yukle(self, sayfalar):
         self.onizleme_sayfalar = []
-
-        png_sayfalar = [p for p in sayfalar if not p.lower().endswith(".pdf")]
-        pdf_sayfalar = [p for p in sayfalar if p.lower().endswith(".pdf")]
-
-        for yol in png_sayfalar:
+        for yol in sayfalar:
             try:
                 img = Image.open(yol)
                 self.onizleme_sayfalar.append(img.copy())
-            except Exception:
-                pass
-
-        if not self.onizleme_sayfalar and pdf_sayfalar:
-            try:
-                result = subprocess.run(
-                    ["identify", "-format", "%n\n", pdf_sayfalar[0]],
-                    capture_output=True, text=True
-                )
-                toplam = int(result.stdout.strip().split("\n")[0]) if result.stdout.strip() else 1
-                for i in range(toplam):
-                    p = f"/tmp/_onizleme_{os.getpid()}_{i}.png"
-                    subprocess.run(
-                        ["convert", "-density", "96", f"{pdf_sayfalar[0]}[{i}]", p],
-                        capture_output=True
-                    )
-                    if os.path.exists(p):
-                        self.onizleme_sayfalar.append(Image.open(p).copy())
-                        os.remove(p)
             except Exception:
                 pass
 
