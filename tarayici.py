@@ -272,7 +272,9 @@ class TarayiciApp:
             coz = self.cozunurluk.get()
             renk_mod = self.renk.get()
 
-            renk_map = {"Renkli": "Color", "Gri": "Gray", "Siyah-Beyaz": "Black & White"}
+            # Tarayıcı yalnızca Color ve Gray destekliyor;
+            # Siyah-Beyaz için gri taranıp sonra eşikleme uygulanıyor
+            renk_map = {"Renkli": "Color", "Gri": "Gray", "Siyah-Beyaz": "Gray"}
             renk_deger = renk_map.get(renk_mod, "Color")
 
             gecici = os.path.join(klasor, f"_gecici_{zaman}")
@@ -295,6 +297,13 @@ class TarayiciApp:
             sayfalar = sorted(glob.glob(f"{gecici}/sayfa*.png"))
             if not sayfalar:
                 raise Exception("Hiç sayfa taranamadı. Kağıt beslendi mi?")
+
+            # Siyah-Beyaz modu: gri görüntüyü eşikleyerek ikili (1-bit) yap
+            if renk_mod == "Siyah-Beyaz":
+                for s in sayfalar:
+                    img = Image.open(s).convert("L")
+                    img = img.point(lambda p: 255 if p > 128 else 0, "1")
+                    img.save(s)
 
             if fmt == "pdf":
                 cikti = os.path.join(klasor, f"tarama_{zaman}.pdf")
