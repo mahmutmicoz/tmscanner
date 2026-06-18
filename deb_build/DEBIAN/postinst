@@ -1,0 +1,5 @@
+#!/bin/bash
+set -e
+chmod +x /usr/bin/tmscanner
+gtk-update-icon-cache /usr/share/icons/hicolor 2>/dev/null || true
+update-desktop-database -q 2>/dev/null || true
