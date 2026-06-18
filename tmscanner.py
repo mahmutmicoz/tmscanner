@@ -19,6 +19,25 @@ __app_name__ = "TMScanner"
 DEVICE = "airscan:e0:Brother MFC-L2715DW series (USB)"
 KAYIT_KLASORU = os.path.expanduser("~/Documents/TMScanner")
 
+# Ghostscript PDF sıkıştırma kalitesi:
+# /screen=küçük, /ebook=dengeli (önerilen), /printer=yüksek kalite
+GS_KALITE = "/ebook"
+
+
+def sikistir_pdf(kaynak: str, hedef: str) -> bool:
+    """Ghostscript ile PDF'i sıkıştırır. Başarısız olursa orijinali kopyalar."""
+    try:
+        subprocess.run([
+            "gs", "-sDEVICE=pdfwrite", "-dCompatibilityLevel=1.4",
+            f"-dPDFSETTINGS={GS_KALITE}", "-dNOPAUSE", "-dQUIET", "-dBATCH",
+            f"-sOutputFile={hedef}", kaynak
+        ], check=True, capture_output=True)
+        return True
+    except Exception:
+        import shutil
+        shutil.copy2(kaynak, hedef)
+        return False
+
 KOYU  = "#1e1e2e"
 PANEL = "#2a2a3e"
 VURGU = "#7c6af7"
@@ -491,8 +510,14 @@ class TMScanner:
                     img.save(s)
 
             if fmt == "pdf":
+                ham_pdf = os.path.join(klasor, f"_ham_{zaman}.pdf")
                 cikti = os.path.join(klasor, f"scan_{zaman}.pdf")
-                subprocess.run(["convert"] + sayfalar + [cikti], check=True)
+                subprocess.run(["convert"] + sayfalar + [ham_pdf], check=True)
+                sikistir_pdf(ham_pdf, cikti)
+                try:
+                    os.remove(ham_pdf)
+                except Exception:
+                    pass
                 onizleme_sayfalar = sayfalar[:]
             elif fmt == "png":
                 if len(sayfalar) == 1:
