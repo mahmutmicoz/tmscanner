@@ -359,7 +359,8 @@ class TMScanner:
         cerceve.pack(fill=tk.BOTH, expand=True, padx=20, pady=(0, 10))
         self.canvas = tk.Canvas(cerceve, bg="#12121e", highlightthickness=0)
         self.canvas.pack(fill=tk.BOTH, expand=True)
-        self._w("canvas_text", None)  # placeholder text, canvas üzerinde
+        self.canvas.bind("<Configure>", self._canvas_boyut_degisti)
+        self._w("canvas_text", None)
 
         nav = tk.Frame(sag, bg=KOYU)
         nav.pack(pady=(0, 12))
@@ -579,6 +580,18 @@ class TMScanner:
         self.sayfa_label.config(text=f"{t['sayfa']} {self.aktif_sayfa + 1} / {toplam}")
         self.onceki_btn.config(state=tk.NORMAL if self.aktif_sayfa > 0 else tk.DISABLED)
         self.sonraki_btn.config(state=tk.NORMAL if self.aktif_sayfa < toplam - 1 else tk.DISABLED)
+
+    def _canvas_boyut_degisti(self, event):
+        if self.onizleme_sayfalar:
+            self._sayfa_goster()
+        else:
+            # Placeholder metnini ortala
+            t = DILLER.get(self.aktif_dil.get(), DILLER["Türkçe"])
+            self.canvas.delete("all")
+            self.canvas.create_text(event.width // 2, event.height // 2,
+                                    text=t["onizleme_bos"], fill=METIN2,
+                                    font=("Segoe UI", 12), justify=tk.CENTER,
+                                    tags="placeholder")
 
     def _onceki_sayfa(self):
         if self.aktif_sayfa > 0:
