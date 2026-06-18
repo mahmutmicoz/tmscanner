@@ -1,0 +1,12 @@
+[Desktop Entry]
+Name=Brother Tarayıcı
+Name[tr]=Brother Tarayıcı
+Comment=Brother MFC-L2716DW Tarayıcı Uygulaması
+Comment[tr]=Brother MFC-L2716DW Tarayıcı Uygulaması
+Exec=python3 /usr/share/brother-tarayici/tarayici.py
+Icon=scanner
+Terminal=false
+Type=Application
+Categories=Graphics;Scanning;Office;
+Keywords=tarayici;scanner;brother;mfc;
+StartupNotify=true

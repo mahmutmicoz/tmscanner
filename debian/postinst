@@ -1,0 +1,4 @@
+#!/bin/bash
+set -e
+chmod +x /usr/bin/brother-tarayici
+update-desktop-database -q 2>/dev/null || true
