@@ -12,41 +12,39 @@ import glob
 import threading
 from datetime import datetime
 
-__version__ = "2.1.1"
+__version__ = "2.2.0"
 __author__ = "Mahmut MİCOZKADIOĞLU"
 __app_name__ = "TMScanner"
 
 # Sürüm notları — sürüm etiketine tıklayınca gösterilir
 SURUM_NOTLARI = {
     "Türkçe": (
-        "TMScanner v2.1.1 — Sürüm Notları\n"
+        "TMScanner v2.2.0 — Sürüm Notları\n"
         "\n"
-        "• Çoklu PDF Kaydet artık kayıt yerini ve dosya adını sorar.\n"
-        "• Düz yüzey (cam) tarama düzeltildi: artık escl arka ucu\n"
-        "  kullanılıyor, sonsuz tarama / takılma sorunu giderildi.\n"
-        "• Taradıkça ekleme: hem ADF hem düz yüzeyde her tarama\n"
-        "  önizlemeye yeni sayfa olarak eklenir, sayfalar birikir.\n"
-        "• \"Çoklu PDF Kaydet\": biriken tüm sayfaları tek ve\n"
-        "  sıkıştırılmış bir PDF olarak kaydeder.\n"
-        "• \"Temizle\": biriken sayfaları sıfırlar.\n"
-        "• Artık gereksiz olan FORMAT seçici kaldırıldı (akış her\n"
-        "  zaman çok sayfalı PDF üretir).\n"
-        "• Uygulamalar menüsünde düzgün görünüm ve simge."
+        "• \"Dosya Ekle\": diskteki JPG / TIFF / PNG / BMP vb.\n"
+        "  görselleri (çok sayfalı TIFF dahil) içe aktarıp\n"
+        "  taranan sayfalarla birlikte birleştirebilirsiniz.\n"
+        "• \"Birleştir ve Kaydet\": biriken sayfaları tek dosyada\n"
+        "  PDF ya da çok sayfalı TIFF olarak kaydeder.\n"
+        "• Sıkıştırma: PDF Ghostscript ile, TIFF JPEG-içi-TIFF\n"
+        "  (kalite 80) ile sıkıştırılır; büyük görseller küçültülür.\n"
+        "• Kayıt sırasında konum ve dosya adı sorulur.\n"
+        "• Taradıkça ekleme: her tarama önizlemeye yeni sayfa ekler.\n"
+        "• Düz yüzey tarama kararlı (escl) — takılma sorunu yok."
     ),
     "English": (
-        "TMScanner v2.1.1 — Release Notes\n"
+        "TMScanner v2.2.0 — Release Notes\n"
         "\n"
-        "• Save Multi-page PDF now asks for location and file name.\n"
-        "• Flatbed (platen) scanning fixed: now uses the escl\n"
-        "  backend, no more endless-scan / freeze issue.\n"
-        "• Scan-and-append: every scan (ADF or flatbed) adds a new\n"
-        "  page to the preview; pages accumulate.\n"
-        "• \"Save Multi-page PDF\": saves all collected pages into a\n"
-        "  single compressed PDF.\n"
-        "• \"Clear\": resets the collected pages.\n"
-        "• Removed the now-redundant FORMAT selector (flow always\n"
-        "  produces a multi-page PDF).\n"
-        "• Proper application-menu entry and icon."
+        "• \"Add Files\": import JPG / TIFF / PNG / BMP images from\n"
+        "  disk (including multi-page TIFF) and merge them with\n"
+        "  scanned pages.\n"
+        "• \"Combine & Save\": save collected pages as a single PDF\n"
+        "  or a multi-page TIFF.\n"
+        "• Compression: PDF via Ghostscript, TIFF via JPEG-in-TIFF\n"
+        "  (quality 80); large images are downscaled.\n"
+        "• Asks for location and file name when saving.\n"
+        "• Scan-and-append: every scan adds a new page to preview.\n"
+        "• Flatbed scanning stable (escl) — no more freeze issue."
     ),
 }
 
@@ -112,7 +110,8 @@ DILLER = {
         "dil": "DİL",
         "coklu": "Çoklu sayfa (tek PDF)",
         "sayfa_ekle": "➕ Sayfa Ekle",
-        "bitir_kaydet": "📄 Çoklu PDF Kaydet",
+        "bitir_kaydet": "💾 Birleştir ve Kaydet",
+        "dosya_ekle_btn": "📁 Dosya Ekle (JPG/TIFF/PNG)",
         "biriken_temizle": "✗ Temizle",
         "biriken": "{n} sayfa biriktirildi",
         "tara_ilk": "İLK SAYFAYI TARA",
@@ -145,7 +144,8 @@ DILLER = {
         "dil": "LANGUAGE",
         "coklu": "Multi-page (single PDF)",
         "sayfa_ekle": "➕ Add Page",
-        "bitir_kaydet": "📄 Save Multi-page PDF",
+        "bitir_kaydet": "💾 Combine & Save",
+        "dosya_ekle_btn": "📁 Add Files (JPG/TIFF/PNG)",
         "biriken_temizle": "✗ Clear",
         "biriken": "{n} pages collected",
         "tara_ilk": "SCAN FIRST PAGE",
@@ -178,7 +178,8 @@ DILLER = {
         "dil": "SPRACHE",
         "coklu": "Mehrseitig (eine PDF)",
         "sayfa_ekle": "➕ Seite hinzufügen",
-        "bitir_kaydet": "📄 Mehrseitige PDF speichern",
+        "bitir_kaydet": "💾 Zusammenführen & Speichern",
+        "dosya_ekle_btn": "📁 Dateien hinzufügen",
         "biriken_temizle": "✗ Löschen",
         "biriken": "{n} Seiten gesammelt",
         "tara_ilk": "ERSTE SEITE SCANNEN",
@@ -211,7 +212,8 @@ DILLER = {
         "dil": "LANGUE",
         "coklu": "Multipage (un seul PDF)",
         "sayfa_ekle": "➕ Ajouter une page",
-        "bitir_kaydet": "📄 Enregistrer PDF multipage",
+        "bitir_kaydet": "💾 Combiner et enregistrer",
+        "dosya_ekle_btn": "📁 Ajouter des fichiers",
         "biriken_temizle": "✗ Effacer",
         "biriken": "{n} pages collectées",
         "tara_ilk": "NUMÉRISER 1RE PAGE",
@@ -244,7 +246,8 @@ DILLER = {
         "dil": "IDIOMA",
         "coklu": "Multipágina (un solo PDF)",
         "sayfa_ekle": "➕ Añadir página",
-        "bitir_kaydet": "📄 Guardar PDF multipágina",
+        "bitir_kaydet": "💾 Combinar y guardar",
+        "dosya_ekle_btn": "📁 Añadir archivos",
         "biriken_temizle": "✗ Borrar",
         "biriken": "{n} páginas recogidas",
         "tara_ilk": "ESCANEAR 1A PÁGINA",
@@ -419,6 +422,13 @@ class TMScanner:
                 activebackground="#6a5ae0", activeforeground="#ffffff"))
         self._widgets["btn_tara"].pack(pady=6, fill=tk.X, padx=20)
 
+        # Dosya Ekle: mevcut JPG/TIFF/PNG vb. görselleri içe aktar
+        self._w("btn_dosya_ekle", tk.Button(alt, text="",
+                command=self._dosya_ekle, bg=GIRIS, fg=METIN,
+                relief="flat", font=("Segoe UI", 10), cursor="hand2",
+                padx=8, pady=6))
+        self._widgets["btn_dosya_ekle"].pack(pady=(0, 4), fill=tk.X, padx=20)
+
         # Çoklu sayfa: Bitir/Temizle butonları (başta gizli)
         coklu_btn_f = tk.Frame(alt, bg=PANEL)
         self._widgets["coklu_btn_f"] = coklu_btn_f
@@ -500,6 +510,7 @@ class TMScanner:
         self._widgets["lbl_onizleme"].config(text=t["onizleme"])
         self._widgets["btn_bitir"].config(text=t["bitir_kaydet"])
         self._widgets["btn_biriken_temizle"].config(text=t["biriken_temizle"])
+        self._widgets["btn_dosya_ekle"].config(text=t["dosya_ekle_btn"])
 
         rg_k = self._widgets["rg_kaynak"]
         rg_k["adf"].config(text=t["adf"])
@@ -641,17 +652,68 @@ class TMScanner:
         else:
             f.pack_forget()
 
+    def _dosya_ekle(self):
+        """Mevcut görselleri (JPG/TIFF/PNG vb.) biriktirmeye ekler."""
+        dosyalar = filedialog.askopenfilenames(
+            title="Dosya Ekle",
+            initialdir=self.kayit_yolu.get(),
+            filetypes=[
+                ("Görseller", "*.jpg *.jpeg *.png *.tif *.tiff *.bmp *.gif *.webp"),
+                ("JPEG", "*.jpg *.jpeg"),
+                ("TIFF", "*.tif *.tiff"),
+                ("PNG", "*.png"),
+                ("Tüm dosyalar", "*.*"),
+            ],
+        )
+        if not dosyalar:
+            return
+        self.ilerleme.start(10)
+        threading.Thread(target=self._dosya_ekle_thread, args=(list(dosyalar),),
+                         daemon=True).start()
+
+    def _dosya_ekle_thread(self, dosyalar):
+        try:
+            klasor = self.kayit_yolu.get()
+            os.makedirs(klasor, exist_ok=True)
+            if not self.biriken_klasor:
+                zaman = datetime.now().strftime("%Y%m%d_%H%M%S")
+                self.biriken_klasor = os.path.join(klasor, f"_biriken_{zaman}")
+                os.makedirs(self.biriken_klasor, exist_ok=True)
+            eklenen = 0
+            for yol in dosyalar:
+                try:
+                    img = Image.open(yol)
+                except Exception:
+                    continue
+                # Çok sayfalı TIFF/GIF: tüm kareleri ekle
+                kare_sayisi = getattr(img, "n_frames", 1)
+                for kare in range(kare_sayisi):
+                    try:
+                        img.seek(kare)
+                    except Exception:
+                        pass
+                    idx = len(self.biriken) + 1
+                    dst = os.path.join(self.biriken_klasor, f"sayfa{idx:03d}.png")
+                    img.convert("RGB").save(dst, "PNG")
+                    self.biriken.append(dst)
+                    eklenen += 1
+            if eklenen == 0:
+                raise Exception("Geçerli görsel bulunamadı.")
+            self.root.after(0, self._biriken_eklendi)
+        except Exception as e:
+            self.root.after(0, self._tara_hata, str(e))
+
     def _coklu_bitir(self):
-        """Biriken tüm sayfaları tek PDF olarak kaydeder (kayıt yeri sorulur)."""
+        """Biriken tüm sayfaları tek PDF veya TIFF olarak kaydeder."""
         if not self.biriken:
             return
         zaman = datetime.now().strftime("%Y%m%d_%H%M%S")
         hedef = filedialog.asksaveasfilename(
-            title="Çoklu PDF Kaydet",
+            title="Birleştir ve Kaydet",
             initialdir=self.kayit_yolu.get(),
             initialfile=f"scan_{zaman}.pdf",
             defaultextension=".pdf",
-            filetypes=[("PDF", "*.pdf")],
+            filetypes=[("PDF", "*.pdf"), ("TIFF", "*.tiff *.tif")],
         )
         if not hedef:
             return  # kullanıcı iptal etti
@@ -665,13 +727,30 @@ class TMScanner:
         try:
             t = DILLER.get(self.aktif_dil.get(), DILLER["Türkçe"])
             klasor = os.path.dirname(cikti) or self.kayit_yolu.get()
-            ham_pdf = os.path.join(klasor, f"_ham_{datetime.now():%H%M%S%f}.pdf")
-            subprocess.run(["convert"] + self.biriken + [ham_pdf], check=True)
-            sikistir_pdf(ham_pdf, cikti)
-            try:
-                os.remove(ham_pdf)
-            except Exception:
-                pass
+            uzanti = os.path.splitext(cikti)[1].lower()
+
+            if uzanti in (".tif", ".tiff"):
+                # Çok sayfalı, sıkıştırılmış TIFF (JPEG-içi-TIFF, kalite 80)
+                imgs = []
+                for p in self.biriken:
+                    im = Image.open(p).convert("RGB")
+                    # Çok büyük görselleri ~200 DPI A4 boyutuna indir
+                    if max(im.size) > 2400:
+                        im.thumbnail((2400, 2400), Image.LANCZOS)
+                    imgs.append(im)
+                imgs[0].save(cikti, save_all=True, append_images=imgs[1:],
+                             compression="jpeg", quality=80)
+            else:
+                # Çok sayfalı PDF (Ghostscript ile sıkıştırılır)
+                ham_pdf = os.path.join(klasor,
+                                       f"_ham_{datetime.now():%H%M%S%f}.pdf")
+                subprocess.run(["convert"] + self.biriken + [ham_pdf], check=True)
+                sikistir_pdf(ham_pdf, cikti)
+                try:
+                    os.remove(ham_pdf)
+                except Exception:
+                    pass
+
             self.son_dosyayi = cikti
             mesaj = f"{t['kaydedildi']}: {os.path.basename(cikti)}"
             self.root.after(0, self._coklu_kaydedildi, mesaj)
