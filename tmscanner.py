@@ -12,15 +12,16 @@ import glob
 import threading
 from datetime import datetime
 
-__version__ = "2.1.0"
+__version__ = "2.1.1"
 __author__ = "Mahmut MİCOZKADIOĞLU"
 __app_name__ = "TMScanner"
 
 # Sürüm notları — sürüm etiketine tıklayınca gösterilir
 SURUM_NOTLARI = {
     "Türkçe": (
-        "TMScanner v2.1.0 — Sürüm Notları\n"
+        "TMScanner v2.1.1 — Sürüm Notları\n"
         "\n"
+        "• Çoklu PDF Kaydet artık kayıt yerini ve dosya adını sorar.\n"
         "• Düz yüzey (cam) tarama düzeltildi: artık escl arka ucu\n"
         "  kullanılıyor, sonsuz tarama / takılma sorunu giderildi.\n"
         "• Taradıkça ekleme: hem ADF hem düz yüzeyde her tarama\n"
@@ -33,8 +34,9 @@ SURUM_NOTLARI = {
         "• Uygulamalar menüsünde düzgün görünüm ve simge."
     ),
     "English": (
-        "TMScanner v2.1.0 — Release Notes\n"
+        "TMScanner v2.1.1 — Release Notes\n"
         "\n"
+        "• Save Multi-page PDF now asks for location and file name.\n"
         "• Flatbed (platen) scanning fixed: now uses the escl\n"
         "  backend, no more endless-scan / freeze issue.\n"
         "• Scan-and-append: every scan (ADF or flatbed) adds a new\n"
@@ -640,21 +642,30 @@ class TMScanner:
             f.pack_forget()
 
     def _coklu_bitir(self):
-        """Biriken tüm sayfaları tek PDF olarak kaydeder."""
+        """Biriken tüm sayfaları tek PDF olarak kaydeder (kayıt yeri sorulur)."""
         if not self.biriken:
             return
+        zaman = datetime.now().strftime("%Y%m%d_%H%M%S")
+        hedef = filedialog.asksaveasfilename(
+            title="Çoklu PDF Kaydet",
+            initialdir=self.kayit_yolu.get(),
+            initialfile=f"scan_{zaman}.pdf",
+            defaultextension=".pdf",
+            filetypes=[("PDF", "*.pdf")],
+        )
+        if not hedef:
+            return  # kullanıcı iptal etti
         self._widgets["btn_tara"].config(state=tk.DISABLED)
         self._widgets["btn_bitir"].config(state=tk.DISABLED)
         self.ilerleme.start(10)
-        threading.Thread(target=self._coklu_kaydet, daemon=True).start()
+        threading.Thread(target=self._coklu_kaydet, args=(hedef,),
+                         daemon=True).start()
 
-    def _coklu_kaydet(self):
+    def _coklu_kaydet(self, cikti):
         try:
             t = DILLER.get(self.aktif_dil.get(), DILLER["Türkçe"])
-            zaman = datetime.now().strftime("%Y%m%d_%H%M%S")
-            klasor = self.kayit_yolu.get()
-            ham_pdf = os.path.join(klasor, f"_ham_{zaman}.pdf")
-            cikti = os.path.join(klasor, f"scan_{zaman}.pdf")
+            klasor = os.path.dirname(cikti) or self.kayit_yolu.get()
+            ham_pdf = os.path.join(klasor, f"_ham_{datetime.now():%H%M%S%f}.pdf")
             subprocess.run(["convert"] + self.biriken + [ham_pdf], check=True)
             sikistir_pdf(ham_pdf, cikti)
             try:
